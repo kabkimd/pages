@@ -155,8 +155,6 @@ function createItem(node, isDir) {
     tree.open_node(parentId);
   }).fail((xhr) => alert('Create failed: ' + xhr.responseText));
 }
-  }).fail((xhr) => alert('Create failed: ' + xhr.responseText));
-}
 
 function deleteItem(node) {
   if (!confirm('Delete?')) return;
