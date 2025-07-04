@@ -140,7 +140,9 @@ function customMenu(node) {
 function createItem(node, isDir) {
     const tree = $('#jstree').jstree(true);
     // Default parent is root
-    const parentId = node && node.id ? node.id : '#';
+    const parentPath = (node && node.id && node.id !== '#')
+        ? node.id
+        : '';
     const name = prompt(`New ${isDir ? 'folder' : 'file'} name:`);
     if (!name) return;
     $.ajax({
