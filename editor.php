@@ -139,7 +139,8 @@ function customMenu(node) {
 
 function createItem(node, isDir) {
   const tree = $('#jstree').jstree(true);
-  const parentId = node.id || '#';
+  // Default parent is root
+  const parentId = node && node.id ? node.id : '#';
   const name = prompt(`New ${isDir ? 'folder' : 'file'} name:`);
   if (!name) return;
   $.ajax({
@@ -148,12 +149,12 @@ function createItem(node, isDir) {
     contentType: 'application/json',
     data: JSON.stringify({ path: parentId === '#' ? '' : parentId, name, isDirectory: isDir })
   }).done(() => {
-    if (parentId === '#') {
-      tree.refresh();
-    } else {
-      tree.refresh_node(parentId);
-      tree.open_node(parentId);
-    }
+    // Refresh only the parent node, not entire tree
+    tree.refresh_node(parentId);
+    // Keep parent open so new item is visible
+    tree.open_node(parentId);
+  }).fail((xhr) => alert('Create failed: ' + xhr.responseText));
+}
   }).fail((xhr) => alert('Create failed: ' + xhr.responseText));
 }
 
