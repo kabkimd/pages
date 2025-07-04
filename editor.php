@@ -26,7 +26,6 @@
     <h1>Edit <?= htmlspecialchars($displayName) ?>'s Files</h1>
     <div class="user-links">
       <span class="greeting">Hello, <strong><?= htmlspecialchars($currentUserFullName) ?></strong></span>
-      <a href="/logout" class="btn">Logout</a>
     </div>
   </div>
 </header>
