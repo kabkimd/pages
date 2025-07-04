@@ -6,7 +6,7 @@
   <title>Edit <?= htmlspecialchars($displayName) ?>'s Files</title>
   <link rel="stylesheet" href="/codemirror/lib/codemirror.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="style.css">
   <style>
     #page {
       display: flex;
