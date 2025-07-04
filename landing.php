@@ -8,7 +8,7 @@ require 'list.php';
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Student Index</h1>
+    <h1>I/M/D Index</h1>
 
     <?php foreach ($students as $year => $list): ?>
         <h2><?php echo htmlspecialchars($year); ?></h2>

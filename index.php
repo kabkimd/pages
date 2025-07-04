@@ -25,7 +25,7 @@ foreach ($students as $yearList) {
 
 if (!$validUser) {
     http_response_code(404);
-    echo "<h1>404 - Page not found</h1>";
+    echo "<h1>404 - Not a valid user. Page not found</h1>";
     exit;
 }
 
@@ -39,7 +39,7 @@ if (isset($parts[1]) && $parts[1] === 'edit') {
 $filePath = __DIR__ . "/pages/{$username}/index.html";
 if (file_exists($filePath)) {
     $content = file_get_contents($filePath);
-    echo "<!DOCTYPE html><html><head><title>{$displayName}'s Page</title></head><body>{$content}</body></html>";
+    echo $content;
 } else {
     echo "<h1>This student hasn't published anything yet.</h1>";
 }
