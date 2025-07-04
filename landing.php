@@ -1,11 +1,5 @@
 <?php
-// Sample Pokémon divided by "Year"
-$students = [
-    'Year 1' => ['Bulbasaur', 'Charmander', 'Squirtle', 'Pikachu', 'Eevee'],
-    'Year 2' => ['Chikorita', 'Cyndaquil', 'Totodile', 'Togepi', 'Mareep'],
-    'Year 3' => ['Treecko', 'Torchic', 'Mudkip', 'Ralts', 'Slakoth'],
-    'Year 4' => ['Turtwig', 'Chimchar', 'Piplup', 'Shinx', 'Riolu']
-];
+require 'list.php';
 ?>
 <!DOCTYPE html>
 <html>
@@ -16,13 +10,13 @@ $students = [
 <body>
     <h1>Student Index</h1>
 
-    <?php foreach ($students as $year => $names): ?>
+    <?php foreach ($students as $year => $list): ?>
         <h2><?php echo htmlspecialchars($year); ?></h2>
         <ul>
-            <?php foreach ($names as $name): ?>
+            <?php foreach ($list as [$displayName, $username]): ?>
                 <li>
-                    <a href="<?php echo urlencode($name); ?>">
-                        <?php echo htmlspecialchars($name); ?>
+                    <a href="/<?php echo urlencode($username); ?>">
+                        <?php echo htmlspecialchars($displayName); ?>
                     </a>
                 </li>
             <?php endforeach; ?>
