@@ -1,35 +1,33 @@
 <?php
-// Sample Pokémon divided by "Year"
-$students = [
-    'Year 1' => ['Bulbasaur', 'Charmander', 'Squirtle', 'Pikachu', 'Eevee'],
-    'Year 2' => ['Chikorita', 'Cyndaquil', 'Totodile', 'Togepi', 'Mareep'],
-    'Year 3' => ['Treecko', 'Torchic', 'Mudkip', 'Ralts', 'Slakoth'],
-    'Year 4' => ['Turtwig', 'Chimchar', 'Piplup', 'Shinx', 'Riolu']
-];
-?>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>⚠ WIP ⚠ | I/M/D Pages</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <h1>Student Index</h1>
+$request = trim($_SERVER['REQUEST_URI'], '/');
 
-    <?php foreach ($students as $year => $names): ?>
-        <h2><?php echo htmlspecialchars($year); ?></h2>
-        <ul>
-            <?php foreach ($names as $name): ?>
-                <li>
-                    <a href="students.php?name=<?php echo urlencode($name); ?>">
-                        <?php echo htmlspecialchars($name); ?>
-                    </a>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    <?php endforeach; ?>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
+// If homepage
+if ($request == '') {
+    // Show landing page with list of Pokémon
+    include 'landing.php';
+    exit;
+}
+
+// Sanitize the request (allow only letters/numbers/-/_)
+$safeName = preg_replace('/[^a-zA-Z0-9_-]/', '', $request);
+
+$filePath = __DIR__ . "/students/{$safeName}.html";
+
+if (file_exists($filePath)) {
+    $content = file_get_contents($filePath);
+    ?>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title><?php echo htmlspecialchars($safeName); ?>'s Page</title>
+    </head>
+    <body>
+        <?php echo $content; ?>
+    </body>
+    </html>
+    <?php
+} else {
+    http_response_code(404);
+    echo "<h1>404 - Page not found</h1>";
+}
+?>
