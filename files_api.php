@@ -28,21 +28,53 @@ switch ($action) {
             echo json_encode(['error' => 'Invalid path']);
         }
         break;
-    case 'create':
-        $data = json_decode(file_get_contents('php://input'), true);
-        $newPath = $basePath . '/' . $data['path'] . '/' . $data['name'];
-        if (!isValidPath(realpath(dirname($newPath)), $basePath)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Invalid parent path']);
+        case 'create':
+            // 1) Always return JSON
+            header('Content-Type: application/json');
+
+            // 2) Parse JSON input
+            $input = json_decode(file_get_contents('php://input'), true) ?: [];
+            $relPath     = trim($input['path'] ?? '', '/');
+            $name        = $input['name'] ?? '';
+            $isDirectory = !empty($input['isDirectory']);
+
+            // 3) Build & validate parent directory
+            $parentDir = $basePath . ($relPath !== '' ? '/' . $relPath : '');
+            $realParent = realpath($parentDir);
+            if ($realParent === false || strpos($realParent, $basePath) !== 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Invalid parent path']);
+                exit;
+            }
+
+            // 4) Sanitize new item name
+            $safeName = basename($name);
+            if ($safeName === '' || preg_match('/[\/\\\\]/', $safeName)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Invalid file or folder name']);
+                exit;
+            }
+
+            // 5) Create directory or file
+            $newPath = $realParent . '/' . $safeName;
+            if ($isDirectory) {
+                if (!mkdir($newPath, 0755, true)) {
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'error' => 'Failed to create folder']);
+                    exit;
+                }
+            } else {
+                if (file_put_contents($newPath, '') === false) {
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'error' => 'Failed to create file']);
+                    exit;
+                }
+            }
+
+            // 6) Success!
+            echo json_encode(['success' => true]);
             exit;
-        }
-        if ($data['isDirectory']) {
-            mkdir($newPath, 0755, true);
-        } else {
-            file_put_contents($newPath, '');
-        }
-        echo json_encode(['success' => true]);
-        break;
+
     case 'rename':
         $data = json_decode(file_get_contents('php://input'), true);
         $oldPath = realpath($basePath . '/' . $data['oldPath']);
