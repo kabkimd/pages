@@ -5,7 +5,7 @@ require 'list.php';
 <html>
 <head>
     <title>⚠ WIP ⚠ | I/M/D Pages</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <h1>I/M/D Index</h1>
