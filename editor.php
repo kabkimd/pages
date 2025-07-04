@@ -100,6 +100,12 @@ $(function() {
   initTree();
   initEditor();
   initUpload();
+  // Show context menu on blank sidebar area for root
+  $('#sidebar').on('contextmenu', function(e) {
+    e.preventDefault();
+    const tree = $('#jstree').jstree(true);
+    tree.show_contextmenu(tree.get_node('#'), e.pageX, e.pageY);
+  });
 });
 
 function initTree() {
@@ -132,13 +138,23 @@ function customMenu(node) {
 }
 
 function createItem(node, isDir) {
+  const tree = $('#jstree').jstree(true);
+  const parentId = node.id || '#';
   const name = prompt(`New ${isDir ? 'folder' : 'file'} name:`);
   if (!name) return;
-  $.post(`/files_api.php?action=create&username=${username}`, JSON.stringify({
-    path: node.id,
-    name,
-    isDirectory: isDir
-  }), () => $('#jstree').jstree(true).refresh_node(node));
+  $.ajax({
+    url: `/files_api.php?action=create&username=${username}`,
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({ path: parentId === '#' ? '' : parentId, name, isDirectory: isDir })
+  }).done(() => {
+    if (parentId === '#') {
+      tree.refresh();
+    } else {
+      tree.refresh_node(parentId);
+      tree.open_node(parentId);
+    }
+  }).fail((xhr) => alert('Create failed: ' + xhr.responseText));
 }
 
 function deleteItem(node) {
@@ -149,7 +165,7 @@ function deleteItem(node) {
 function loadFile(relPath) {
   $.get(`/files_api.php?action=content&username=${username}&path=${encodeURIComponent(relPath)}`, content => {
     const mode = detectMode(relPath);
-    cmEditor.setOption("mode", mode);
+    cmEditor.setOption('mode', mode);
     cmEditor.setValue(content);
     cmEditor.focus();
     currentRelPath = relPath;
@@ -159,11 +175,11 @@ function loadFile(relPath) {
 
 function detectMode(path) {
   const ext = path.split('.').pop().toLowerCase();
-  if (['js', 'mjs', 'jsx'].includes(ext)) return 'javascript';
-  if (ext === 'html') return 'htmlmixed';
-  if (ext === 'css') return 'css';
-  if (ext === 'json') return 'application/json';
-  if (['md', 'markdown'].includes(ext)) return 'markdown';
+  if (['js','mjs','jsx'].includes(ext)) return 'javascript';
+  if (ext==='html') return 'htmlmixed';
+  if (ext==='css') return 'css';
+  if (ext==='json') return 'application/json';
+  if (['md','markdown'].includes(ext)) return 'markdown';
   return 'plaintext';
 }
 
@@ -178,10 +194,7 @@ function initEditor() {
 
 function saveFile() {
   if (!currentRelPath) return;
-  $.post(`/files_api.php?action=save&username=${username}`, JSON.stringify({
-    path: currentRelPath,
-    content: cmEditor.getValue()
-  }), () => console.log('Saved'));
+  $.post(`/files_api.php?action=save&username=${username}`, JSON.stringify({ path: currentRelPath, content: cmEditor.getValue() }));
 }
 
 function initUpload() {
@@ -190,12 +203,8 @@ function initUpload() {
     if (!file) return alert('No file selected');
     const form = new FormData();
     form.append('file', file);
-    fetch(`/files_api.php?action=upload&username=${username}`, {
-      method: 'POST',
-      body: form
-    })
-    .then(r => r.json())
-    .then(r => r.success && $('#jstree').jstree(true).refresh());
+    fetch(`/files_api.php?action=upload&username=${username}`, { method: 'POST', body: form })
+      .then(r => r.json()).then(r => r.success && $('#jstree').jstree(true).refresh());
   });
 }
 </script>
