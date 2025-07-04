@@ -22,7 +22,19 @@ a {
 a:hover {
     text-decoration: underline;
 }
+/* jsTree custom menu styling */
 .vakata-context {
   font-family: "Segoe UI", Tahoma, sans-serif;
   font-size: 0.9rem;
+  background-color: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.vakata-context li a {
+  padding: 0.4rem 1rem;
+  color: #333;
+}
+.vakata-context li a:hover {
+  background-color: #3498db;
+  color: white;
 }
