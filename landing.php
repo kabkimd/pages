@@ -15,7 +15,7 @@ require 'list.php';
         <ul>
             <?php foreach ($list as [$displayName, $username]): ?>
                 <li>
-                    <a href="/students/<?php echo urlencode($username); ?>">
+                    <a href="/<?php echo urlencode($username); ?>">
                         <?php echo htmlspecialchars($displayName); ?>
                     </a>
                 </li>
