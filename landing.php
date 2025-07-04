@@ -21,7 +21,7 @@ $students = [
         <ul>
             <?php foreach ($names as $name): ?>
                 <li>
-                    <a href="students.php?name=<?php echo urlencode($name); ?>">
+                    <a href="<?php echo urlencode($name); ?>">
                         <?php echo htmlspecialchars($name); ?>
                     </a>
                 </li>
