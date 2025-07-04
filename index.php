@@ -1,33 +1,29 @@
 <?php
-$request = trim($_SERVER['REQUEST_URI'], '/');
-
-// If homepage
-if ($request == '') {
-    // Show landing page with list of Pokémon
-    include 'landing.php';
-    exit;
-}
-
-// Sanitize the request (allow only letters/numbers/-/_)
-$safeName = preg_replace('/[^a-zA-Z0-9_-]/', '', $request);
-
-$filePath = __DIR__ . "/students/{$safeName}.html";
-
-if (file_exists($filePath)) {
-    $content = file_get_contents($filePath);
-    ?>
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title><?php echo htmlspecialchars($safeName); ?>'s Page</title>
-    </head>
-    <body>
-        <?php echo $content; ?>
-    </body>
-    </html>
-    <?php
-} else {
-    http_response_code(404);
-    echo "<h1>404 - Page not found</h1>";
-}
+require 'list.php';
 ?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>⚠ WIP ⚠ | I/M/D Pages</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Student Index</h1>
+
+    <?php foreach ($students as $year => $list): ?>
+        <h2><?php echo htmlspecialchars($year); ?></h2>
+        <ul>
+            <?php foreach ($list as [$displayName, $username]): ?>
+                <li>
+                    <a href="/<?php echo urlencode($username); ?>">
+                        <?php echo htmlspecialchars($displayName); ?>
+                    </a>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endforeach; ?>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
