@@ -14,6 +14,8 @@
   <!-- jsTree & CodeMirror CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css">
   <link rel="stylesheet" href="/codemirror/lib/codemirror.css">
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+
 
   <style>
     /* Layout tweaks */
@@ -81,7 +83,8 @@
   <script src="/codemirror/mode/css/css.js"></script>
   <script src="/codemirror/mode/xml/xml.js"></script>
   <script src="/codemirror/mode/markdown/markdown.js"></script>
-  <script src="/codemirror/mode/json/json.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/json/json.min.js"></script>
 
   <script>
   let cmEditor, currentRelPath = null;
@@ -148,31 +151,43 @@
   }
 
   // ─── Create file or folder ───────────────────────────────────
-  function createItem(node,isDir){
-    const tree = $('#jstree').jstree(true);
-    const parentPath = (node && node.id && node.id!=='#') ? node.id : '';
-    const name = prompt(`New ${isDir?'folder':'file'} name:`);
-    if(!name) return;
+function createItem(node, isDir) {
+  const tree = $('#jstree').jstree(true);
 
-    $.ajax({
-      url: `/files_api.php?action=create&username=${username}`,
-      method:'POST',
-      contentType:'application/json',
-      dataType:'json',
-      data: JSON.stringify({
-        path: parentPath,
-        name,
-        isDirectory: isDir
-      })
-    }).done(resp=>{
-      if(!resp.success) return alert('Create failed: '+(resp.error||'Unknown'));
-      const target = parentPath || '#';
-      tree.refresh_node(target);
-      tree.open_node(target);
-    }).fail((xhr,st,err)=>{
-      alert('Create request failed: '+err);
-    });
-  }
+  // Determine the folder path (empty string = root)
+  const parentPath = (node && node.id && node.id !== '#') ? node.id : '';
+
+  const name = prompt(`New ${isDir ? 'folder' : 'file'} name:`);
+  if (!name) return;
+
+  $.ajax({
+    url: `/files_api.php?action=create&username=${username}`,
+    method: 'POST',
+    contentType: 'application/json',
+    dataType: 'json',
+    data: JSON.stringify({
+      path: parentPath,
+      name: name,
+      isDirectory: isDir
+    })
+  })
+  .done(resp => {
+    if (!resp.success) {
+      return alert('Create failed: ' + (resp.error || 'Unknown error'));
+    }
+    // If we're in a subfolder, refresh just that node; else refresh the whole tree
+    if (parentPath) {
+      tree.refresh_node(parentPath);
+      tree.open_node(parentPath);
+    } else {
+      tree.refresh();         // safe for root
+    }
+  })
+  .fail((xhr, status, err) => {
+    alert('Create request failed: ' + err);
+  });
+}
+
 
   // ─── Delete ───────────────────────────────────────────────────
   function deleteItem(node){
