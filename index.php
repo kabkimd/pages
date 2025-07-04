@@ -3,8 +3,7 @@ require 'list.php';
 
 $request = trim($_SERVER['REQUEST_URI'], '/');
 
-// Homepage
-if ($request == '') {
+if ($request === '') {
     include 'landing.php';
     exit;
 }
@@ -12,7 +11,7 @@ if ($request == '') {
 $parts = explode('/', $request);
 $username = preg_replace('/[^a-zA-Z0-9_-]/', '', $parts[0]);
 
-// Validate username exists in $students list
+// Check if username is valid
 $validUser = false;
 foreach ($students as $yearList) {
     foreach ($yearList as [$name, $user]) {
@@ -30,27 +29,17 @@ if (!$validUser) {
     exit;
 }
 
-// Check if /edit requested
+// Check if /edit
 if (isset($parts[1]) && $parts[1] === 'edit') {
     include 'editor.php';
     exit;
 }
 
-// Otherwise, render their page
-$filePath = __DIR__ . "/students/{$username}.html";
+// Render their index.html
+$filePath = __DIR__ . "/pages/{$username}/index.html";
 if (file_exists($filePath)) {
     $content = file_get_contents($filePath);
-    ?>
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title><?php echo htmlspecialchars($displayName); ?>'s Page</title>
-    </head>
-    <body>
-        <?php echo $content; ?>
-    </body>
-    </html>
-    <?php
+    echo "<!DOCTYPE html><html><head><title>{$displayName}'s Page</title></head><body>{$content}</body></html>";
 } else {
     echo "<h1>This student hasn't published anything yet.</h1>";
 }
