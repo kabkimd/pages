@@ -3,21 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Edit: <?php echo htmlspecialchars($displayName); ?></title>
+  <title>Edit <?= htmlspecialchars($displayName) ?>'s Files</title>
   <link rel="stylesheet" href="/codemirror/lib/codemirror.css">
-  <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css">
+  <link rel="stylesheet" href="/css/style.css">
   <style>
-    html, body { margin: 0; height: 100%; display: flex; flex-direction: column; }
-    header { background: #2c3e50; color: white; padding: 0.5rem 1rem; }
-    #page { flex: 1; display: flex; overflow: hidden; }
-    #sidebar { width: 250px; border-right: 1px solid #ccc; overflow-y: auto; }
-    #editorArea { flex: 1; display: flex; flex-direction: column; }
-    #tabs { background: #f0f0f0; padding: 0.3rem; display: flex; }
-    .tab { margin-right: 0.5rem; padding: 0.2rem 0.5rem; cursor: pointer; background: #ddd; }
-    .tab.active { background: #bbb; font-weight: bold; }
-    #editorWrapper { flex: 1; position: relative; }
-    .CodeMirror { height: 100%; }
+    #page {
+      display: flex;
+      height: calc(100vh - 70px);
+    }
+    #sidebar {
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #ccc;
+    }
+    #jstree {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+    #upload-section {
+      padding: 0.5rem;
+      border-top: 1px solid #ccc;
+      flex: 0 0 10%;
+      background: #f9f9f9;
+    }
+    #editorArea {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #controls {
+      background: #f0f0f0;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid #ccc;
+    }
+    #editorWrapper {
+      flex: 1;
+      position: relative;
+    }
+    .CodeMirror {
+      height: 100%;
+    }
   </style>
 </head>
 <body>
@@ -26,21 +57,31 @@
     <h1>Edit <?= htmlspecialchars($displayName) ?>'s Files</h1>
     <div class="user-links">
       <span class="greeting">Hello, <strong><?= htmlspecialchars($currentUserFullName) ?></strong></span>
+      <a href="/logout" class="btn">Logout</a>
     </div>
   </div>
 </header>
-
 <div id="page">
   <div id="sidebar">
     <div id="jstree"></div>
-    <div id="uploadArea" style="padding: 0.5rem; border-top: 1px solid #ccc;">Drag files here to upload</div>
+    <div id="upload-section">
+      <h4>Upload File</h4>
+      <input type="file" id="file-input">
+      <button id="upload-btn">Upload</button>
+    </div>
   </div>
   <div id="editorArea">
-    <div id="tabs"></div>
-    <div id="editorWrapper"></div>
+    <div id="controls">
+      <button id="new-file-btn">New File</button>
+      <button id="new-folder-btn">New Folder</button>
+      <button id="save-btn">Save</button>
+      <span id="current-file">No file loaded</span>
+    </div>
+    <div id="editorWrapper">
+      <textarea id="editor"></textarea>
+    </div>
   </div>
 </div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
 <script src="/codemirror/lib/codemirror.js"></script>
@@ -49,13 +90,15 @@
 <script src="/codemirror/mode/css/css.js"></script>
 <script src="/codemirror/mode/xml/xml.js"></script>
 <script src="/codemirror/mode/markdown/markdown.js"></script>
+<script src="/codemirror/mode/json/json.js"></script>
 <script>
-let editors = {};
-let currentTab = null;
-const username = <?php echo json_encode($username); ?>;
+let cmEditor;
+let currentRelPath = null;
+const username = <?= json_encode($username) ?>;
 
 $(function() {
   initTree();
+  initEditor();
   initUpload();
 });
 
@@ -69,7 +112,10 @@ function initTree() {
       check_callback: true
     },
     plugins: ['contextmenu', 'dnd', 'types'],
-    types: { folder: { icon: 'jstree-folder' }, file: { icon: 'jstree-file' } },
+    types: {
+      folder: { icon: 'jstree-folder' },
+      file: { icon: 'jstree-file' }
+    },
     contextmenu: { items: customMenu }
   }).on('select_node.jstree', (e, data) => {
     if (data.node.type === 'file') loadFile(data.node.id);
@@ -92,32 +138,23 @@ function createItem(node, isDir) {
     path: node.id,
     name,
     isDirectory: isDir
-  }), () => $('#jstree').jstree(true).refresh()).fail(alert);
+  }), () => $('#jstree').jstree(true).refresh_node(node));
 }
 
 function deleteItem(node) {
   if (!confirm('Delete?')) return;
-  $.post(`/files_api.php?action=delete&username=${username}`, JSON.stringify({ path: node.id }), () => $('#jstree').jstree(true).refresh()).fail(alert);
+  $.post(`/files_api.php?action=delete&username=${username}`, JSON.stringify({ path: node.id }), () => $('#jstree').jstree(true).refresh());
 }
 
 function loadFile(relPath) {
-  if (editors[relPath]) return switchTab(relPath);
   $.get(`/files_api.php?action=content&username=${username}&path=${encodeURIComponent(relPath)}`, content => {
     const mode = detectMode(relPath);
-    const wrapper = $('<div style="height:100%"></div>').appendTo('#editorWrapper').hide();
-    const cm = CodeMirror(wrapper[0], { value: content, mode, lineNumbers: true });
-    editors[relPath] = { cm, wrapper };
-    const tab = $('<div class="tab"></div>').text(relPath).appendTo('#tabs').click(() => switchTab(relPath));
-    switchTab(relPath);
+    cmEditor.setOption("mode", mode);
+    cmEditor.setValue(content);
+    cmEditor.focus();
+    currentRelPath = relPath;
+    $('#current-file').text(relPath);
   });
-}
-
-function switchTab(relPath) {
-  $('.tab').removeClass('active');
-  $('#tabs').find(`.tab:contains(${relPath})`).addClass('active');
-  for (const path in editors) editors[path].wrapper.hide();
-  editors[relPath].wrapper.show();
-  currentTab = relPath;
 }
 
 function detectMode(path) {
@@ -130,14 +167,35 @@ function detectMode(path) {
   return 'plaintext';
 }
 
+function initEditor() {
+  cmEditor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+    lineNumbers: true,
+    lineWrapping: true,
+    mode: 'plaintext'
+  });
+  $('#save-btn').click(saveFile);
+}
+
+function saveFile() {
+  if (!currentRelPath) return;
+  $.post(`/files_api.php?action=save&username=${username}`, JSON.stringify({
+    path: currentRelPath,
+    content: cmEditor.getValue()
+  }), () => console.log('Saved'));
+}
+
 function initUpload() {
-  $('#uploadArea').on('dragover', e => e.preventDefault()).on('drop', e => {
-    e.preventDefault();
-    const file = e.originalEvent.dataTransfer.files[0];
+  $('#upload-btn').click(() => {
+    const file = $('#file-input')[0].files[0];
+    if (!file) return alert('No file selected');
     const form = new FormData();
     form.append('file', file);
-    fetch(`/files_api.php?action=upload&username=${username}`, { method: 'POST', body: form })
-      .then(r => r.json()).then(r => r.success && $('#jstree').jstree(true).refresh());
+    fetch(`/files_api.php?action=upload&username=${username}`, {
+      method: 'POST',
+      body: form
+    })
+    .then(r => r.json())
+    .then(r => r.success && $('#jstree').jstree(true).refresh());
   });
 }
 </script>
