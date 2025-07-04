@@ -152,14 +152,22 @@
 
   // ─── Create file or folder ───────────────────────────────────
 function createItem(node, isDir) {
+  // 1) Ensure node is always an object with an id
+  if (!node || typeof node.id !== 'string') {
+    node = { id: '#' };
+  }
+
   const tree = $('#jstree').jstree(true);
 
-  // Determine the folder path (empty string = root)
-  const parentPath = (node && node.id && node.id !== '#') ? node.id : '';
+  // 2) Compute the parentPath for the AJAX payload
+  //    '#' means “root” → we send empty string
+  const parentPath = node.id !== '#' ? node.id : '';
 
+  // 3) Ask the user for the new name
   const name = prompt(`New ${isDir ? 'folder' : 'file'} name:`);
   if (!name) return;
 
+  // 4) Call the PHP API
   $.ajax({
     url: `/files_api.php?action=create&username=${username}`,
     method: 'POST',
@@ -173,20 +181,22 @@ function createItem(node, isDir) {
   })
   .done(resp => {
     if (!resp.success) {
-      return alert('Create failed: ' + (resp.error || 'Unknown error'));
+      return alert('Create failed: ' + (resp.error || 'Unknown'));
     }
-    // If we're in a subfolder, refresh just that node; else refresh the whole tree
+    // 5) Refresh only the affected node
     if (parentPath) {
       tree.refresh_node(parentPath);
       tree.open_node(parentPath);
     } else {
-      tree.refresh();         // safe for root
+      tree.refresh();   // redraw whole tree at root
     }
   })
   .fail((xhr, status, err) => {
-    alert('Create request failed: ' + err);
+    alert('Request failed: ' + err);
   });
 }
+
+
 
 
   // ─── Delete ───────────────────────────────────────────────────
