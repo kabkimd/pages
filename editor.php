@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Edit: <?php echo htmlspecialchars($displayName); ?></title>
   <link rel="stylesheet" href="/codemirror/lib/codemirror.css">
+  <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css">
   <style>
     html, body { margin: 0; height: 100%; display: flex; flex-direction: column; }
@@ -20,7 +21,16 @@
   </style>
 </head>
 <body>
-<header><h1>Edit <?php echo htmlspecialchars($displayName); ?>'s Files</h1></header>
+<header>
+  <div class="header-container">
+    <h1>Edit <?= htmlspecialchars($displayName) ?>'s Files</h1>
+    <div class="user-links">
+      <span class="greeting">Hello, <strong><?= htmlspecialchars($currentUserFullName) ?></strong></span>
+      <a href="/logout" class="btn">Logout</a>
+    </div>
+  </div>
+</header>
+
 <div id="page">
   <div id="sidebar">
     <div id="jstree"></div>
