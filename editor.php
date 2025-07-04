@@ -138,22 +138,30 @@ function customMenu(node) {
 }
 
 function createItem(node, isDir) {
-  const tree = $('#jstree').jstree(true);
-  // Default parent is root
-  const parentId = node && node.id ? node.id : '#';
-  const name = prompt(`New ${isDir ? 'folder' : 'file'} name:`);
-  if (!name) return;
-  $.ajax({
+    const tree = $('#jstree').jstree(true);
+    // Default parent is root
+    const parentId = node && node.id ? node.id : '#';
+    const name = prompt(`New ${isDir ? 'folder' : 'file'} name:`);
+    if (!name) return;
+    $.ajax({
     url: `/files_api.php?action=create&username=${username}`,
     method: 'POST',
     contentType: 'application/json',
-    data: JSON.stringify({ path: parentId === '#' ? '' : parentId, name, isDirectory: isDir })
-  }).done(() => {
-    // Refresh only the parent node, not entire tree
-    tree.refresh_node(parentId);
-    // Keep parent open so new item is visible
-    tree.open_node(parentId);
-  }).fail((xhr) => alert('Create failed: ' + xhr.responseText));
+    dataType: 'json',             // ← Add this
+    data: JSON.stringify({ path: parentPath, name, isDirectory })
+    })
+    .done(resp => {
+    if (!resp.success) {
+        return alert('Create failed: ' + (resp.error||'Unknown error'));
+    }
+    const tree = $('#jstree').jstree(true);
+    // Refresh just the folder you created in:
+    tree.refresh_node(parentPath || '#');
+    tree.open_node(parentPath || '#');
+    })
+    .fail((xhr, status, err) => {
+    alert('Create request failed: ' + err);
+    });
 }
 
 function deleteItem(node) {
