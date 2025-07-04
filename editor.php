@@ -1,221 +1,255 @@
+<?php
+// editor.php — frontend for editing a user’s /pages/<username> contents
+// Assumes $username, $displayName, $currentUserFullName are set
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Edit <?= htmlspecialchars($displayName) ?>'s Files</title>
-  <link rel="stylesheet" href="/codemirror/lib/codemirror.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css">
+
+  <!-- Shared site CSS -->
   <link rel="stylesheet" href="/css/style.css">
+  <!-- jsTree & CodeMirror CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css">
+  <link rel="stylesheet" href="/codemirror/lib/codemirror.css">
+
   <style>
-    #page {
-      display: flex;
-      height: calc(100vh - 70px);
-    }
+    /* Layout tweaks */
+    #page { display: flex; height: calc(100vh - 70px); }
     #sidebar {
-      width: 280px;
-      display: flex;
-      flex-direction: column;
+      width: 280px; display: flex; flex-direction: column;
       border-right: 1px solid #ccc;
     }
-    #jstree {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0.5rem;
-    }
+    #jstree { flex:1; overflow-y:auto; padding:0.5rem; }
     #upload-section {
-      padding: 0.5rem;
-      border-top: 1px solid #ccc;
-      flex: 0 0 10%;
-      background: #f9f9f9;
+      flex:0 0 10%; padding:0.5rem; border-top:1px solid #ccc;
+      background:#f9f9f9;
     }
-    #editorArea {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
+    #editorArea { flex:1; display:flex; flex-direction:column; }
     #controls {
-      background: #f0f0f0;
-      padding: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      border-bottom: 1px solid #ccc;
+      background:#f0f0f0; padding:0.5rem; display:flex;
+      align-items:center; gap:0.5rem; border-bottom:1px solid #ccc;
     }
-    #editorWrapper {
-      flex: 1;
-      position: relative;
-    }
-    .CodeMirror {
-      height: 100%;
-    }
+    #editorWrapper { flex:1; position:relative; }
+    .CodeMirror { height:100%; }
   </style>
 </head>
 <body>
-<header>
-  <div class="header-container">
-    <h1>Edit <?= htmlspecialchars($displayName) ?>'s Files</h1>
-    <div class="user-links">
-      <span class="greeting">Hello, <strong><?= htmlspecialchars($currentUserFullName) ?></strong></span>
-      <a href="/logout" class="btn">Logout</a>
+  <header>
+    <div class="header-container">
+      <h1>Edit <?= htmlspecialchars($displayName) ?>'s Files</h1>
+      <div class="user-links">
+        <span class="greeting">
+          Hello, <strong><?= htmlspecialchars($currentUserFullName) ?></strong>
+        </span>
+        <a href="/logout" class="btn">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <div id="page">
+    <div id="sidebar">
+      <div id="jstree"></div>
+      <div id="upload-section">
+        <h4>Upload File</h4>
+        <input type="file" id="file-input">
+        <button id="upload-btn">Upload</button>
+      </div>
+    </div>
+
+    <div id="editorArea">
+      <div id="controls">
+        <button id="new-file-btn">New File</button>
+        <button id="new-folder-btn">New Folder</button>
+        <button id="save-btn">Save</button>
+        <span id="current-file">No file loaded</span>
+      </div>
+      <div id="editorWrapper">
+        <textarea id="editor"></textarea>
+      </div>
     </div>
   </div>
-</header>
-<div id="page">
-  <div id="sidebar">
-    <div id="jstree"></div>
-    <div id="upload-section">
-      <h4>Upload File</h4>
-      <input type="file" id="file-input">
-      <button id="upload-btn">Upload</button>
-    </div>
-  </div>
-  <div id="editorArea">
-    <div id="controls">
-      <button id="new-file-btn">New File</button>
-      <button id="new-folder-btn">New Folder</button>
-      <button id="save-btn">Save</button>
-      <span id="current-file">No file loaded</span>
-    </div>
-    <div id="editorWrapper">
-      <textarea id="editor"></textarea>
-    </div>
-  </div>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
-<script src="/codemirror/lib/codemirror.js"></script>
-<script src="/codemirror/mode/javascript/javascript.js"></script>
-<script src="/codemirror/mode/htmlmixed/htmlmixed.js"></script>
-<script src="/codemirror/mode/css/css.js"></script>
-<script src="/codemirror/mode/xml/xml.js"></script>
-<script src="/codemirror/mode/markdown/markdown.js"></script>
-<script src="/codemirror/mode/json/json.js"></script>
-<script>
-let cmEditor;
-let currentRelPath = null;
-const username = <?= json_encode($username) ?>;
 
-$(function() {
-  initTree();
-  initEditor();
-  initUpload();
-  // Show context menu on blank sidebar area for root
-  $('#sidebar').on('contextmenu', function(e) {
-    e.preventDefault();
-    const tree = $('#jstree').jstree(true);
-    tree.show_contextmenu(tree.get_node('#'), e.pageX, e.pageY);
-  });
-});
+  <!-- jQuery, jsTree, and CodeMirror JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+  <script src="/codemirror/lib/codemirror.js"></script>
+  <script src="/codemirror/mode/javascript/javascript.js"></script>
+  <script src="/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+  <script src="/codemirror/mode/css/css.js"></script>
+  <script src="/codemirror/mode/xml/xml.js"></script>
+  <script src="/codemirror/mode/markdown/markdown.js"></script>
+  <script src="/codemirror/mode/json/json.js"></script>
 
-function initTree() {
-  $('#jstree').jstree({
-    core: {
-      data: {
-        url: `/files_api.php?action=tree&username=${username}`,
-        dataType: "json"
-      },
-      check_callback: true
-    },
-    plugins: ['contextmenu', 'dnd', 'types'],
-    types: {
-      folder: { icon: 'jstree-folder' },
-      file: { icon: 'jstree-file' }
-    },
-    contextmenu: { items: customMenu }
-  }).on('select_node.jstree', (e, data) => {
-    if (data.node.type === 'file') loadFile(data.node.id);
-  });
-}
+  <script>
+  let cmEditor, currentRelPath = null;
+  const username = <?= json_encode($username) ?>;
 
-function customMenu(node) {
-  return {
-    create: { label: 'New File', action: () => createItem(node, false) },
-    folder: { label: 'New Folder', action: () => createItem(node, true) },
-    rename: { label: 'Rename', action: () => $('#jstree').jstree(true).edit(node) },
-    delete: { label: 'Delete', action: () => deleteItem(node) }
-  };
-}
+  $(function(){
+    initTree();
+    initEditor();
+    initUpload();
 
-function createItem(node, isDir) {
-    const tree = $('#jstree').jstree(true);
-    // Default parent is root
-    const parentPath = (node && node.id && node.id !== '#')
-        ? node.id
-        : '';
-    const name = prompt(`New ${isDir ? 'folder' : 'file'} name:`);
-    if (!name) return;
-    $.ajax({
-    url: `/files_api.php?action=create&username=${username}`,
-    method: 'POST',
-    contentType: 'application/json',
-    dataType: 'json',             // ← Add this
-    data: JSON.stringify({ path: parentPath, name, isDirectory })
-    })
-    .done(resp => {
-    if (!resp.success) {
-        return alert('Create failed: ' + (resp.error||'Unknown error'));
-    }
-    const tree = $('#jstree').jstree(true);
-    // Refresh just the folder you created in:
-    tree.refresh_node(parentPath || '#');
-    tree.open_node(parentPath || '#');
-    })
-    .fail((xhr, status, err) => {
-    alert('Create request failed: ' + err);
+    // Right‐click blank sidebar → show root menu
+    $('#sidebar').on('contextmenu', e => {
+      e.preventDefault();
+      const tree = $('#jstree').jstree(true);
+      tree.show_contextmenu(tree.get_node('#'), e.pageX, e.pageY);
     });
-}
-
-function deleteItem(node) {
-  if (!confirm('Delete?')) return;
-  $.post(`/files_api.php?action=delete&username=${username}`, JSON.stringify({ path: node.id }), () => $('#jstree').jstree(true).refresh());
-}
-
-function loadFile(relPath) {
-  $.get(`/files_api.php?action=content&username=${username}&path=${encodeURIComponent(relPath)}`, content => {
-    const mode = detectMode(relPath);
-    cmEditor.setOption('mode', mode);
-    cmEditor.setValue(content);
-    cmEditor.focus();
-    currentRelPath = relPath;
-    $('#current-file').text(relPath);
   });
-}
 
-function detectMode(path) {
-  const ext = path.split('.').pop().toLowerCase();
-  if (['js','mjs','jsx'].includes(ext)) return 'javascript';
-  if (ext==='html') return 'htmlmixed';
-  if (ext==='css') return 'css';
-  if (ext==='json') return 'application/json';
-  if (['md','markdown'].includes(ext)) return 'markdown';
-  return 'plaintext';
-}
+  // ─── Initialize jsTree ────────────────────────────────────────
+  function initTree(){
+    $('#jstree').jstree({
+      core: {
+        data: {
+          url: `/files_api.php?action=tree&username=${username}`,
+          dataType: 'json'
+        },
+        check_callback: true
+      },
+      plugins: ['contextmenu','dnd','types'],
+      types: {
+        folder:{icon:'jstree-folder'}, file:{icon:'jstree-file'}
+      },
+      contextmenu:{items:customMenu}
+    })
+    .on('select_node.jstree',(e,d)=>{
+      if(d.node.type==='file') loadFile(d.node.id);
+    })
+    .on('loaded.jstree', ()=> {
+      // optionally expand root on load:
+      $('#jstree').jstree(true).open_node('#');
+    });
+  }
 
-function initEditor() {
-  cmEditor = CodeMirror.fromTextArea(document.getElementById('editor'), {
-    lineNumbers: true,
-    lineWrapping: true,
-    mode: 'plaintext'
-  });
-  $('#save-btn').click(saveFile);
-}
+  // ─── Context‐menu items ───────────────────────────────────────
+  function customMenu(node){
+    return {
+      createFile: {
+        label:'New File',
+        action:()=>createItem(node,false)
+      },
+      createFolder: {
+        label:'New Folder',
+        action:()=>createItem(node,true)
+      },
+      renameItem:{
+        label:'Rename',
+        action:()=>$('#jstree').jstree(true).edit(node)
+      },
+      deleteItem:{
+        label:'Delete',
+        action:()=>deleteItem(node)
+      }
+    };
+  }
 
-function saveFile() {
-  if (!currentRelPath) return;
-  $.post(`/files_api.php?action=save&username=${username}`, JSON.stringify({ path: currentRelPath, content: cmEditor.getValue() }));
-}
+  // ─── Create file or folder ───────────────────────────────────
+  function createItem(node,isDir){
+    const tree = $('#jstree').jstree(true);
+    const parentPath = (node && node.id && node.id!=='#') ? node.id : '';
+    const name = prompt(`New ${isDir?'folder':'file'} name:`);
+    if(!name) return;
 
-function initUpload() {
-  $('#upload-btn').click(() => {
-    const file = $('#file-input')[0].files[0];
-    if (!file) return alert('No file selected');
-    const form = new FormData();
-    form.append('file', file);
-    fetch(`/files_api.php?action=upload&username=${username}`, { method: 'POST', body: form })
-      .then(r => r.json()).then(r => r.success && $('#jstree').jstree(true).refresh());
-  });
-}
-</script>
+    $.ajax({
+      url: `/files_api.php?action=create&username=${username}`,
+      method:'POST',
+      contentType:'application/json',
+      dataType:'json',
+      data: JSON.stringify({
+        path: parentPath,
+        name,
+        isDirectory: isDir
+      })
+    }).done(resp=>{
+      if(!resp.success) return alert('Create failed: '+(resp.error||'Unknown'));
+      const target = parentPath || '#';
+      tree.refresh_node(target);
+      tree.open_node(target);
+    }).fail((xhr,st,err)=>{
+      alert('Create request failed: '+err);
+    });
+  }
+
+  // ─── Delete ───────────────────────────────────────────────────
+  function deleteItem(node){
+    if(!confirm('Delete?')) return;
+    $.ajax({
+      url:`/files_api.php?action=delete&username=${username}`,
+      method:'POST',
+      contentType:'application/json',
+      dataType:'json',
+      data: JSON.stringify({path:node.id})
+    }).done(resp=>{
+      if(resp.success) $('#jstree').jstree(true).refresh();
+      else alert('Delete failed');
+    });
+  }
+
+  // ─── Load file into CodeMirror ───────────────────────────────
+  function loadFile(relPath){
+    fetch(`/files_api.php?action=content&username=${username}&path=${encodeURIComponent(relPath)}`)
+      .then(r=>r.text())
+      .then(text=>{
+        const mode = detectMode(relPath);
+        cmEditor.setOption('mode',mode);
+        cmEditor.setValue(text);
+        cmEditor.focus();
+        currentRelPath = relPath;
+        $('#current-file').text(relPath);
+      });
+  }
+
+  // ─── Detect language mode by extension ───────────────────────
+  function detectMode(path){
+    const ext = path.split('.').pop().toLowerCase();
+    if(['js','mjs','jsx'].includes(ext))     return 'javascript';
+    if(ext==='html')                        return 'htmlmixed';
+    if(ext==='css')                         return 'css';
+    if(ext==='json')                        return 'application/json';
+    if(['md','markdown'].includes(ext))     return 'markdown';
+    return 'plaintext';
+  }
+
+  // ─── Initialize CodeMirror ──────────────────────────────────
+  function initEditor(){
+    cmEditor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+      lineNumbers:true, lineWrapping:true, mode:'plaintext'
+    });
+    $('#save-btn').click(saveFile);
+  }
+
+  function saveFile(){
+    if(!currentRelPath) return alert('No file loaded');
+    $.ajax({
+      url:`/files_api.php?action=save&username=${username}`,
+      method:'POST',
+      contentType:'application/json',
+      dataType:'json',
+      data: JSON.stringify({
+        path: currentRelPath,
+        content: cmEditor.getValue()
+      })
+    });
+  }
+
+  // ─── File upload ─────────────────────────────────────────────
+  function initUpload(){
+    $('#upload-btn').click(()=>{
+      const file = $('#file-input')[0].files[0];
+      if(!file) return alert('No file selected');
+      const form = new FormData();
+      form.append('file', file);
+      fetch(`/files_api.php?action=upload&username=${username}`,{
+        method:'POST', body: form
+      })
+      .then(r=>r.json())
+      .then(r=>{ if(r.success) $('#jstree').jstree(true).refresh(); });
+    });
+  }
+  </script>
 </body>
 </html>
