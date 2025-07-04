@@ -1,13 +1,12 @@
 <?php
-// files_api.php - PHP equivalent for your Node.js file API with full features
+// files_api.php - PHP backend for file management with jsTree compatibility
 
 $basePath = __DIR__ . '/pages/' . sanitizeUsername();
 
-// Simple routing based on query param 'action'
 $action = $_GET['action'] ?? '';
 switch ($action) {
     case 'tree':
-        echo json_encode(getTree($basePath));
+        echo json_encode(buildFlatTree($basePath));
         break;
     case 'content':
         $path = realpath($basePath . '/' . $_GET['path']);
@@ -90,44 +89,32 @@ switch ($action) {
         echo json_encode(['error' => 'Unknown action']);
 }
 
-// Recursively build jsTree data
-function getTree($dir, $rel = '') {
+function buildFlatTree($dir, $parent = '#', $rel = '') {
     $items = [];
     foreach (scandir($dir) as $entry) {
         if ($entry === '.' || $entry === '..') continue;
         $fullPath = "$dir/$entry";
         $relPath = $rel === '' ? $entry : "$rel/$entry";
+        $id = $relPath;
         if (is_dir($fullPath)) {
-            $items[] = [
-                'id' => $relPath,
-                'text' => $entry,
-                'type' => 'folder',
-                'children' => getTree($fullPath, $relPath)
-            ];
+            $items[] = [ 'id' => $id, 'parent' => $parent, 'text' => $entry, 'type' => 'folder' ];
+            $items = array_merge($items, buildFlatTree($fullPath, $id, $relPath));
         } else {
-            $items[] = [
-                'id' => $relPath,
-                'text' => $entry,
-                'type' => 'file',
-                'children' => false
-            ];
+            $items[] = [ 'id' => $id, 'parent' => $parent, 'text' => $entry, 'type' => 'file' ];
         }
     }
     return $items;
 }
 
-// Sanitize username to prevent directory traversal
 function sanitizeUsername() {
     $parts = explode('/', trim($_GET['username'] ?? '', '/'));
     return preg_replace('/[^a-zA-Z0-9_-]/', '', $parts[0]);
 }
 
-// Ensure $path is within $basePath to avoid exploits
 function isValidPath($path, $basePath) {
     return $path && strpos($path, realpath($basePath)) === 0;
 }
 
-// Recursively delete folder
 function rmdirRecursive($dir) {
     foreach (array_diff(scandir($dir), ['.', '..']) as $file) {
         $path = "$dir/$file";

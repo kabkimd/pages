@@ -40,7 +40,6 @@
 <script src="/codemirror/mode/css/css.js"></script>
 <script src="/codemirror/mode/xml/xml.js"></script>
 <script src="/codemirror/mode/markdown/markdown.js"></script>
-<script src="/codemirror/mode/json/json.js"></script>
 <script>
 let editors = {};
 let currentTab = null;
@@ -53,7 +52,13 @@ $(function() {
 
 function initTree() {
   $('#jstree').jstree({
-    core: { data: { url: `/files_api.php?action=tree&username=${username}` }, check_callback: true },
+    core: {
+      data: {
+        url: `/files_api.php?action=tree&username=${username}`,
+        dataType: "json"
+      },
+      check_callback: true
+    },
     plugins: ['contextmenu', 'dnd', 'types'],
     types: { folder: { icon: 'jstree-folder' }, file: { icon: 'jstree-file' } },
     contextmenu: { items: customMenu }
@@ -74,7 +79,7 @@ function customMenu(node) {
 function createItem(node, isDir) {
   const name = prompt(`New ${isDir ? 'folder' : 'file'} name:`);
   if (!name) return;
-  $.post('/files_api.php?action=create&username='+username, JSON.stringify({
+  $.post(`/files_api.php?action=create&username=${username}`, JSON.stringify({
     path: node.id,
     name,
     isDirectory: isDir
@@ -83,7 +88,7 @@ function createItem(node, isDir) {
 
 function deleteItem(node) {
   if (!confirm('Delete?')) return;
-  $.post('/files_api.php?action=delete&username='+username, JSON.stringify({ path: node.id }), () => $('#jstree').jstree(true).refresh()).fail(alert);
+  $.post(`/files_api.php?action=delete&username=${username}`, JSON.stringify({ path: node.id }), () => $('#jstree').jstree(true).refresh()).fail(alert);
 }
 
 function loadFile(relPath) {
