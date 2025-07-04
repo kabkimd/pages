@@ -1,109 +1,28 @@
-/* public/css/style.css */
-
-/* Reset body margins & set a font */
-html, body {
-  margin: 0;
-  padding: 0;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f5f5f5;
-  color: #333;
+body {
+    font-family: Garamond, sans-serif;
+    max-width: 600px;
+    margin: 2em auto;
+    padding: 1em;
 }
-
-/* Header styles */
-header {
-  background-color: #2c3e50;
-  color: #ecf0f1;
-  padding: 1rem 2rem;
+h1 {
+    text-align: center;
+    color: #ef5350;
 }
-.header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+ul {
+    list-style-type: none;
+    padding-left: 0;
 }
-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
+li {
+    margin: 0.3em 0;
 }
-.user-links {
-  display: flex;
-  align-items: center;
+a {
+    text-decoration: none;
+    color: #42a5f5;
 }
-.user-links .greeting {
-  margin-right: 1rem;
+a:hover {
+    text-decoration: underline;
 }
-.user-links .btn {
-  display: inline-block;
-  background-color: #3498db;
-  color: white;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-.user-links .btn:hover {
-  background-color: #2980b9;
-}
-
-/* Main content area */
-main {
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 0 1rem;
-}
-
-/* Year group */
-.year-group {
-  margin-bottom: 2rem;
-  background-color: white;
-  border-radius: 4px;
-  padding: 1rem 1.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-.year-group h2 {
-  margin-top: 0;
-  margin-bottom: 0.75rem;
-  border-bottom: 2px solid #bdc3c7;
-  padding-bottom: 0.25rem;
-  color: #2c3e50;
-}
-
-/* Student list */
-.student-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.student-list li {
-  margin: 0.5rem 0;
-}
-.student-list a {
-  text-decoration: none;
-  color: #2980b9;
-  font-weight: 500;
-}
-.student-list a:hover {
-  text-decoration: underline;
-}
-
-/* “No students” message */
-.no-students {
-  font-style: italic;
-  color: #7f8c8d;
-}
-
-/* jsTree custom menu styling */
 .vakata-context {
   font-family: "Segoe UI", Tahoma, sans-serif;
   font-size: 0.9rem;
-  background-color: white;
-  border: 1px solid #ccc;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-.vakata-context li a {
-  padding: 0.4rem 1rem;
-  color: #333;
-}
-.vakata-context li a:hover {
-  background-color: #3498db;
-  color: white;
 }
